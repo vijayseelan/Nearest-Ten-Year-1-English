@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearest Ten Adventure</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #fecaca, #e9d5ff, #bfdbfe);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            background-color: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #7c3aed;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .tab-button {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 9999px;
+            font-size: 1.125rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .tab-button.active {
+            background-color: #fde68a;
+        }
+        .tab-button:not(.active) {
+            background-color: #e5e7eb;
+        }
+        .tab-content {
+            background-color: #fef3c7;
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .number-display {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 9999px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            animation: pulse 2s infinite;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 9999px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button-blue {
+            background-color: #60a5fa;
+            color: white;
+        }
+        .button-purple {
+            background-color: #a78bfa;
+            color: white;
+        }
+        .button:hover {
+            opacity: 0.9;
+        }
+        .number-line {
+            position: relative;
+            height: 4rem;
+            margin: 2rem 0;
+        }
+        .number-line-bg {
+            position: absolute;
+            width: 100%;
+            height: 0.25rem;
+            background: linear-gradient(to right, #f472b6, #a78bfa, #60a5fa);
+            border-radius: 9999px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .number-marker {
+            position: absolute;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .number-marker::before {
+            content: '';
+            display: block;
+            width: 0.25rem;
+            height: 1rem;
+            background-color: #a78bfa;
+            margin: 0 auto 0.25rem;
+        }
+        .current-number {
+            position: absolute;
+            width: 2rem;
+            height: 2rem;
+            background-color: #f87171;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            transform: translate(-50%, -50%);
+            top: 50%;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Nearest Ten Adventure 🚀</h1>
+        <div class="tabs">
+            <button id="lessonTab" class="tab-button active">Lesson 📚</button>
+            <button id="exerciseTab" class="tab-button">Exercise 🏋️‍♂️</button>
+        </div>
+        <div id="lessonContent" class="tab-content">
+            <p>Let's learn about the nearest ten!</p>
+            <div id="lessonNumber" class="number-display"></div>
+            <div id="lessonSteps"></div>
+            <div class="button-group">
+                <button id="prevStep" class="button button-blue">⬅️ Previous</button>
+                <button id="nextStep" class="button button-blue">Next ➡️</button>
+            </div>
+            <button id="newLessonNumber" class="button button-purple">New Number 🎲</button>
+        </div>
+        <div id="exerciseContent" class="tab-content" style="display: none;">
+            <h2>Practice Time! 🎯</h2>
+            <p>Find the nearest ten for this number:</p>
+            <div id="exerciseNumber" class="number-display"></div>
+            <div id="numberLine" class="number-line">
+                <div class="number-line-bg"></div>
+            </div>
+            <p>Score: <span id="score">0</span> 🌟</p>
+            <div id="answerButtons" class="button-group"></div>
+            <button id="newQuestion" class="button button-purple">New Number 🎲</button>
+        </div>
+    </div>
+
+    <script>
+        let activeTab = 'lesson';
+        let lessonNumber = 58;
+        let lessonStep = 0;
+        let currentNumber = generateRandomNumber();
+        let score = 0;
+
+        function generateRandomNumber() {
+            return Math.floor(Math.random() * 90) + 1;
+        }
+
+        function getNearestTen(num) {
+            return Math.round(num / 10) * 10;
+        }
+
+        function updateLessonContent() {
+            document.getElementById('lessonNumber').textContent = lessonNumber;
+            const stepsEl = document.getElementById('lessonSteps');
+            stepsEl.innerHTML = '';
+            if (lessonStep >= 1) {
+                stepsEl.innerHTML += `<p>Step 1: Look at the ones digit (${lessonNumber % 10}). Is it less than 5, or 5 and above? 🤔</p>`;
+            }
+            if (lessonStep >= 2) {
+                stepsEl.innerHTML += `<p>Step 2: ${lessonNumber % 10} is ${lessonNumber % 10 >= 5 ? "5 or more" : "less than 5"}, so we round ${lessonNumber % 10 >= 5 ? "up" : "down"}! ${lessonNumber % 10 >= 5 ? "🚀" : "🐢"}</p>`;
+            }
+            if (lessonStep >= 3) {
+                stepsEl.innerHTML += `<p>Step 3: ${lessonNumber % 10 >= 5 ? `We add 1 to ${Math.floor(lessonNumber / 10)} and get ${Math.floor(lessonNumber / 10) + 1}. Yay! 🎉` : `We keep ${Math.floor(lessonNumber / 10)} as it is. Cool! 😎`}</p>`;
+            }
+            if (lessonStep >= 4) {
+                stepsEl.innerHTML += `<p>Step 4: The nearest ten to ${lessonNumber} is ${getNearestTen(lessonNumber)}!</p>`;
+            }
+            document.getElementById('prevStep').disabled = lessonStep === 0;
+            document.getElementById('nextStep').disabled = lessonStep === 4;
+        }
+
+        function updateNumberLine() {
+            const numberLine = document.getElementById('numberLine');
+            const nearestTen = getNearestTen(currentNumber);
+            const lowerTen = nearestTen - 10;
+            const upperTen = nearestTen + 10;
+            
+            numberLine.innerHTML = `
+                <div class="number-line-bg"></div>
+                ${[lowerTen, nearestTen, upperTen].map((n, i) => `
+                    <div class="number-marker" style="left: ${i * 50}%;">
+                        <div>${n}</div>
+                    </div>
+                `).join('')}
+                <div class="current-number" style="left: ${((currentNumber - lowerTen) / 20) * 100}%;">
+                    ${currentNumber}
+                </div>
+            `;
+        }
+
+        function updateExerciseContent() {
+            document.getElementById('exerciseNumber').textContent = currentNumber;
+            updateNumberLine();
+            document.getElementById('score').textContent = score;
+            const answerButtons = document.getElementById('answerButtons');
+            answerButtons.innerHTML = '';
+            [currentNumber - 10, currentNumber, currentNumber + 10].forEach(num => {
+                const button = document.createElement('button');
+                button.textContent = getNearestTen(num);
+                button.className = 'button button-blue';
+                button.onclick = () => checkAnswer(getNearestTen(num));
+                answerButtons.appendChild(button);
+            });
+        }
+
+        function checkAnswer(answer) {
+            if (answer === getNearestTen(currentNumber)) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+            updateExerciseContent();
+        }
+
+        document.getElementById('lessonTab').onclick = () => {
+            activeTab = 'lesson';
+            document.getElementById('lessonContent').style.display = 'block';
+            document.getElementById('exerciseContent').style.display = 'none';
+            document.getElementById('lessonTab').classList.add('active');
+            document.getElementById('exerciseTab').classList.remove('active');
+        };
+
+        document.getElementById('exerciseTab').onclick = () => {
+            activeTab = 'exercise';
+            document.getElementById('lessonContent').style.display = 'none';
+            document.getElementById('exerciseContent').style.display = 'block';
+            document.getElementById('lessonTab').classList.remove('active');
+            document.getElementById('exerciseTab').classList.add('active');
+            updateExerciseContent();
+        };
+
+        document.getElementById('prevStep').onclick = () => {
+            lessonStep = Math.max(lessonStep - 1, 0);
+            updateLessonContent();
+        };
+
+        document.getElementById('nextStep').onclick = () => {
+            lessonStep = Math.min(lessonStep + 1, 4);
+            updateLessonContent();
+        };
+
+        document.getElementById('newLessonNumber').onclick = () => {
+            lessonNumber = generateRandomNumber();
+            lessonStep = 0;
+            updateLessonContent();
+        };
+
+        document.getElementById('newQuestion').onclick = () => {
+            currentNumber = generateRandomNumber();
+            updateExerciseContent();
+        };
+
+        // Initial setup
+        updateLessonContent();
+        updateExerciseContent();
+    </script>
+</body>
+</html>
